@@ -49,6 +49,10 @@ int main(int argc, char** argv)
 		execlp("./execlsdir", "execlsdir", argv[1], NULL);
 	}
 
+	int status;
+
+	wait(&status);
+
 	if((f = fopen(files, "r")) == NULL)
 	{
 		perror("Could not open files.txt for reading");
@@ -59,8 +63,10 @@ int main(int argc, char** argv)
 
 	if(pid == 0)
 	{
-		execlp("sort", "sort", files, NULL);
+		execlp("sort", "sort", "-o", files, files, NULL);
 	}
+
+	wait(&status);
 
 	char name[200];
 	char dir[200];

@@ -51,10 +51,14 @@ int main(int argc, char** argv)
 
 		pid = fork();
 
+		int status;
+
 		if(pid == 0)
 		{
 			execlp("./lsdir", "lsdir", files, files, filesLocation, NULL);
 		}
+
+		wait(&status);
 
 		while((direntp = readdir(dirp)) != NULL)
 		{
@@ -81,7 +85,7 @@ int main(int argc, char** argv)
 				}
 				else
 				{
-
+					wait(&status);
 				}
 			}
 		}
