@@ -7,7 +7,12 @@
 #include <string.h>
 
 int main(int argc, char** argv)
-{
+{	
+	char file1[200];
+	char file2[200];
+	char execompare[200];
+	char filesLocation[200];
+	
 	if(argc < 2)
 	{
 		printf("Usage: %s <dir>\n", argv[0]);
@@ -44,7 +49,9 @@ int main(int argc, char** argv)
 			perror("stat error");
 			exit(3);
 		}
-
+		
+		execlp("./execompare", "execompare", file1, file2, filesLocation, NULL);
+		
 		if(S_ISREG(stat_buf.st_mode))
 		{
 			fprintf(f, "%s %s %lld %lo %d\n", direntp->d_name, argv[2], (long long)stat_buf.st_size, (unsigned long)stat_buf.st_mode, ctime(&stat_buf.st_ctim));
