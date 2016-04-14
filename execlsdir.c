@@ -52,7 +52,9 @@ int main(int argc, char** argv)
 		pid = fork();
 
 		int status;
-
+	
+		if(pid < 0) fprintf(stderr,"fork error\n");
+		
 		if(pid == 0)
 		{
 			execlp("./lsdir", "lsdir", files, files, filesLocation, NULL);
