@@ -1,13 +1,3 @@
-/*
- * Boas! Até agora o que fiz foi a parte de ir aos diretórios todos e meter a
- * informação toda no files.txt
- * Basicamente temos 3 aplicações:
- * - o lsdir mete todos os ficheiros regulares de um diretorio no files.txt
- * - o execlsdir vai a todos os diretorios executar o lsdir
- * - o rmdup executa o execlsdir e depois lê o files.txt e altera os links para
- * ficheiros duplicados. Falta essa parte basicamente.
- */
-
 #include <stdio.h>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -43,9 +33,13 @@ int main(int argc, char** argv)
 	pid_t pid;
 
 	pid = fork();
-	
-	if(pid < 0) fprintf(stderr,"fork error\n");
-	
+
+	if(pid == -1)
+	{
+		perror("Fork error");
+		exit(3);
+	}
+
 	if(pid == 0)
 	{
 		execlp("./execlsdir", "execlsdir", argv[1], NULL);
@@ -58,10 +52,16 @@ int main(int argc, char** argv)
 	if((f = fopen(files, "r")) == NULL)
 	{
 		perror("Could not open files.txt for reading");
-		exit(2);
+		exit(4);
 	}
 
 	pid = fork();
+
+	if(pid == -1)
+	{
+		perror("Fork error");
+		exit(5);
+	}
 
 	if(pid == 0)
 	{
@@ -74,13 +74,13 @@ int main(int argc, char** argv)
 	char dir[200];
 	int size;
 	char mode[200];
-	char timeCreation[200];
+	long long timeCreation;
 
 	char name2[200];
 	char dir2[200];
 	int size2;
 	char mode2[200];
-	char timeCreation2[200];
+	long long timeCreation2;
 
 	char hlinks[200];
 
@@ -95,18 +95,114 @@ int main(int argc, char** argv)
 		exit(2);
 	}
 
-	if(fscanf(f, "%s %s %d %s %s", name, dir, &size, mode, timeCreation) == EOF)
+	if(fscanf(f, "%s %s %d %s %lld", name, dir, &size, mode, &timeCreation) == EOF)
 	{
 		return 0;
 	}
 
-	while(fscanf(f, "%s %s %d %s %s", name2, dir2, &size2, mode2, timeCreation2) != EOF)
+	while(fscanf(f, "%s %s %d %s %lld", name2, dir2, &size2, mode2, &timeCreation2) != EOF)
 	{
-		if(strcmp(name, name2) == 0 && size == size2 && strcmp(mode, mode2) == 0 && timeCreation == timeCreation2)
+		if(strcmp(name, name2) == 0 && size == size2 && strcmp(mode, mode2) == 0)
 		{
+			char path1[200];
+			char path2[200];
 
+			strcpy(path1, dir);
+			strcat(path1, "/");
+			strcat(path1, name);
+
+			strcpy(path2, dir2);
+			strcat(path2, "/");
+			strcat(path2, name2);
+
+			pid = fork();
+
+			if(pid == -1)
+			{
+				perror("Fork error");
+				exit(6);
+			}
+
+			if(pid == 0)
+			{
+				execlp("diff", "diff", path1, path2, NULL);
+			}
+
+			wait(&status);
+
+			if(status == 0)
+			{
+				pid = fork();
+
+				if(pid == -1)
+				{
+					perror("Fork error");
+					exit(7);
+				}
+
+				if(pid == 0)
+				{
+					if(timeCreation < timeCreation2)
+					{
+						pid = fork();
+
+						if(pid == -1)
+						{
+							perror("Fork error");
+							exit(8);
+						}
+
+						if(pid == 0)
+						{
+							execlp("rm", "rm", path2, NULL);
+						}
+
+						wait(&status);
+
+						execlp("ln", "ln", path1, path2, NULL);
+					}
+					else
+					{
+						pid = fork();
+
+						if(pid == -1)
+						{
+							perror("Fork error");
+							exit(9);
+						}
+
+						if(pid == 0)
+						{
+							execlp("rm", "rm", path1, NULL);
+						}
+
+						wait(&status);
+
+						execlp("ln", "ln", path2, path1, NULL);
+					}
+				}
+
+				wait(&status);
+
+				if(timeCreation < timeCreation2)
+				{
+					fprintf(output, "%s -> %s\n", path2, path1);
+				}
+				else
+				{
+					fprintf(output, "%s -> %s\n", path1, path2);
+				}
+			}
 		}
+
+		strcpy(name, name2);
+		timeCreation = timeCreation2;
+		strcpy(mode, mode2);
+		size = size2;
+		strcpy(dir, dir2);
 	}
+
+	fclose(output);
 
 	return 0;
 }

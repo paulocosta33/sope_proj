@@ -52,9 +52,13 @@ int main(int argc, char** argv)
 		pid = fork();
 
 		int status;
-	
-		if(pid < 0) fprintf(stderr,"fork error\n");
-		
+
+		if(pid == -1)
+		{
+			perror("Fork error");
+			exit(3);
+		}
+
 		if(pid == 0)
 		{
 			execlp("./lsdir", "lsdir", files, files, filesLocation, NULL);
@@ -71,7 +75,7 @@ int main(int argc, char** argv)
 				continue;
 			}
 
-			if((stat(name, &stat_buf)) == -1)
+			if((lstat(name, &stat_buf)) == -1)
 			{
 				perror("stat error");
 				exit(3);
@@ -80,6 +84,12 @@ int main(int argc, char** argv)
 			if(S_ISDIR(stat_buf.st_mode))
 			{
 				pid = fork();
+
+				if(pid == -1)
+				{
+					perror("Fork error");
+					exit(4);
+				}
 
 				if(pid == 0)
 				{

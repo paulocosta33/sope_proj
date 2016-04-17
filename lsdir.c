@@ -7,12 +7,7 @@
 #include <string.h>
 
 int main(int argc, char** argv)
-{	
-	char file1[200];
-	char file2[200];
-	char execompare[200];
-	char filesLocation[200];
-	
+{
 	if(argc < 2)
 	{
 		printf("Usage: %s <dir>\n", argv[0]);
@@ -44,16 +39,22 @@ int main(int argc, char** argv)
 	{
 		sprintf(name, "%s/%s", argv[1], direntp->d_name);
 
-		if((stat(name, &stat_buf)) == -1)
+		if((lstat(name, &stat_buf)) == -1)
 		{
 			perror("stat error");
 			exit(3);
 		}
-		
-		execlp("./execompare", "execompare", file1, file2, filesLocation, NULL);
-		
+
 		if(S_ISREG(stat_buf.st_mode))
 		{
+			/*fwrite(direntp->d_name, sizeof(char), sizeof(direntp->d_name), f);
+			fwrite(argv[2], sizeof(char), sizeof(argv[2]), f);
+			fwrite(&stat_buf.st_size, sizeof(long long), sizeof(stat_buf.st_size), f);
+			fwrite(&stat_buf.st_mode, sizeof(unsigned long), sizeof(stat_buf.st_mode), f);
+
+			int tmp = ctime(&stat_buf.st_ctim);
+			fwrite(&tmp, sizeof(int), sizeof(ctime(&stat_buf.st_ctim)), f);*/
+			//fprintf(f, "%s\n", direntp->d_name);
 			fprintf(f, "%s %s %lld %lo %d\n", direntp->d_name, argv[2], (long long)stat_buf.st_size, (unsigned long)stat_buf.st_mode, ctime(&stat_buf.st_ctim));
 		}
 	}
